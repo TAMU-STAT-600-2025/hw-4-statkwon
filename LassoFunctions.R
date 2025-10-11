@@ -87,9 +87,11 @@ fitLASSOstandardized <- function(Xtilde,
   # your should return fmin = 0.99999, and not have another iteration
   beta_old <- beta_start
   beta <- beta_old
+  r <- Ytilde - Xtilde %*% beta
   while (TRUE) {
     for (j in 1:p) {
-      beta[j] <- soft(crossprod(Xtilde[, j], Ytilde - Xtilde[, -j] %*% beta[-j]) / n, lambda)
+      beta[j] <- soft(beta_old[j] + crossprod(Xtilde[, j], r) / n, lambda)
+      r <- r + Xtilde[, j] * (beta_old[j] - beta[j])
     }
     fmin_old <- lasso(Xtilde, Ytilde, beta_old, lambda)
     fmin <- lasso(Xtilde, Ytilde, beta, lambda)
