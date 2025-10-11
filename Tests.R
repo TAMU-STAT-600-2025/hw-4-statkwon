@@ -15,4 +15,8 @@ testthat::test_that("Test for LassoFunctions.R", {
   testthat::expect_equal(diag(crossprod(out$Xtilde) / n), rep(1, p))
   testthat::expect_equal(colMeans(out$Xtilde), rep(0, p))
   testthat::expect_equal(mean(out$Ytilde), 0)
+  
+  # Tests for soft()
+  testthat::expect_equal(soft(5, 3), 2)
+  testthat::expect_equal(soft(-5, 3), -2)
 })
