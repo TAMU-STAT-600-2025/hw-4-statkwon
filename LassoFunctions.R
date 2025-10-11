@@ -107,6 +107,10 @@ fitLASSOstandardized <- function(Xtilde,
   return(list(beta = beta, fmin = fmin))
 }
 
+calculate_lambda_max <- function(Xtilde, Ytilde) {
+  return(max(crossprod(Xtilde, Ytilde) / n))
+}
+
 # [ToDo] Fit LASSO on standardized data for a sequence of lambda values. Sequential version of a previous function.
 # Xtilde - centered and scaled X, n x p
 # Ytilde - centered Y, n x 1
@@ -119,23 +123,47 @@ fitLASSOstandardized_seq <- function(Xtilde,
                                      lambda_seq = NULL,
                                      n_lambda = 60,
                                      eps = 0.001) {
+  n <- nrow(Xtilde)
+  
   # [ToDo] Check that n is the same between Xtilde and Ytilde
+  if (n != length(Ytilde)) {
+    stop("The number of rows in Xtilde should be equal to the length of Ytilde.")
+  }
   
   # [ToDo] Check for the user-supplied lambda-seq (see below)
-  # If lambda_seq is supplied, only keep values that are >= 0,
-  # and make sure the values are sorted from largest to smallest.
-  # If none of the supplied values satisfy the requirement,
-  # print the warning message and proceed as if the values were not supplied.
-  
-  
-  # If lambda_seq is not supplied, calculate lambda_max
-  # (the minimal value of lambda that gives zero solution),
-  # and create a sequence of length n_lambda as
-  lambda_seq = exp(seq(log(lambda_max), log(0.01), length = n_lambda))
+  if (!is.null(lambda_seq)) {
+    # If lambda_seq is supplied, only keep values that are >= 0,
+    # and make sure the values are sorted from largest to smallest.
+    lambda_seq <- sort(lambda_seq[lambda_seq >= 0], decreasing = TRUE)
+    # If none of the supplied values satisfy the requirement,
+    # print the warning message and proceed as if the values were not supplied.
+    if (length(lambda_seq) == 0) {
+      warning("All values for lambda are less than zero.")
+      lambda_max <- calculate_lambda_max(Xtilde, Ytilde)
+      lambda_seq <- exp(seq(log(lambda_max), log(0.01), length = n_lambda))
+    }
+  } else {
+    # If lambda_seq is not supplied, calculate lambda_max
+    # (the minimal value of lambda that gives zero solution),
+    # and create a sequence of length n_lambda as
+    lambda_max <- calculate_lambda_max(Xtilde, Ytilde)
+    lambda_seq <- exp(seq(log(lambda_max), log(0.01), length = n_lambda))
+  }
   
   # [ToDo] Apply fitLASSOstandardized going from largest to smallest lambda
   # (make sure supplied eps is carried over).
   # Use warm starts strategy discussed in class for setting the starting values.
+  n_lambda <- length(lambda_seq)
+  beta_mat <- matrix(nrow = p, ncol = n_lambda)
+  beta_start <- rep(0, p)
+  fmin_vec <- vector(mode = "numeric", length = n_lambda)
+  
+  for (i in 1:n_lambda) {
+    out <- fitLASSOstandardized(Xtilde, Ytilde, lambda_seq[i], beta_start, eps)
+    beta_mat[, i] <- out$beta
+    beta_start <- beta_mat[, i]
+    fmin_vec[i] <- out$fmin
+  }
   
   # Return output
   # lambda_seq - the actual sequence of tuning parameters used

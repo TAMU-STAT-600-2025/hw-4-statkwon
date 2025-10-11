@@ -41,4 +41,17 @@ testthat::test_that("Test for LassoFunctions.R", {
     fitLASSOstandardized(Xtilde, Ytilde, lambda, rep(0, p + 1)),
     "The length of beta_start should be equal to the number of columns in Xtilde."
   )
+  
+  # Tests for fitLASSOstandardized_seq()
+  lambda_seq <- c(-3, 0, 2, 5, 1)
+  testthat::expect_error(
+    fitLASSOstandardized_seq(Xtilde, rep(1, n + 1)),
+    "The number of rows in Xtilde should be equal to the length of Ytilde."
+  )
+  testthat::expect_warning(
+    fitLASSOstandardized_seq(Xtilde, Ytilde, c(-1, -2)),
+    "All values for lambda are less than zero."
+  )
+  testthat::expect_no_error(out <- fitLASSOstandardized_seq(Xtilde, Ytilde, lambda_seq))
+  testthat::expect_equal(out$lambda_seq, c(5, 2, 1, 0))
 })
