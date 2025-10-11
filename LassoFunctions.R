@@ -57,18 +57,47 @@ fitLASSOstandardized <- function(Xtilde,
                                  lambda,
                                  beta_start = NULL,
                                  eps = 0.001) {
+  n <- nrow(Xtilde)
+  p <- ncol(Xtilde)
+  
   #[ToDo]  Check that n is the same between Xtilde and Ytilde
+  if (n != length(Ytilde)) {
+    stop("The number of rows in Xtilde should be equal to the length of Ytilde.")
+  }
   
   #[ToDo]  Check that lambda is non-negative
+  if (lambda < 0) {
+    stop("lambda should be non-negative.")
+  }
   
   #[ToDo]  Check for starting point beta_start.
-  # If none supplied, initialize with a vector of zeros.
-  # If supplied, check for compatibility with Xtilde in terms of p
+  if (is.null(beta_start)) {
+    # If none supplied, initialize with a vector of zeros.
+    beta_start <- rep(0, p)
+  } else {
+    # If supplied, check for compatibility with Xtilde in terms of p
+    if (length(beta_start) != p) {
+      stop("The length of beta_start should be equal to the number of columns in Xtilde.")
+    }
+  }
   
   #[ToDo]  Coordinate-descent implementation.
   # Stop when the difference between objective functions is less than eps for the first time.
   # For example, if you have 3 iterations with objectives 3, 1, 0.99999,
   # your should return fmin = 0.99999, and not have another iteration
+  beta_old <- beta_start
+  beta <- beta_old
+  while (TRUE) {
+    for (j in 1:p) {
+      beta[j] <- soft(crossprod(Xtilde[, j], Ytilde - Xtilde[, -j] %*% beta[-j]) / n, lambda)
+    }
+    fmin_old <- lasso(Xtilde, Ytilde, beta_old, lambda)
+    fmin <- lasso(Xtilde, Ytilde, beta, lambda)
+    if (fmin_old - fmin < eps) {
+      break
+    }
+    beta_old = beta
+  }
   
   # Return
   # beta - the solution (a vector)
