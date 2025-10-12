@@ -58,4 +58,8 @@ testthat::test_that("Test for LassoFunctions.R", {
   # Tests for fitLASSO()
   testthat::expect_no_error(out <- fitLASSO(X, Y, lambda_seq))
   testthat::expect_equal(out$lambda_seq, c(5, 2, 1, 0))
+  
+  # Tests for cvLASSO()
+  testthat::expect_no_error(cvLASSO(X, Y))
+  testthat::expect_no_error(cvLASSO(X, Y, lambda_seq))
 })

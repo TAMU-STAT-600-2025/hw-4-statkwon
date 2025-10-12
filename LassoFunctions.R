@@ -108,6 +108,7 @@ fitLASSOstandardized <- function(Xtilde,
 }
 
 calculate_lambda_max <- function(Xtilde, Ytilde) {
+  n <- nrow(Xtilde)
   return(max(crossprod(Xtilde, Ytilde) / n))
 }
 
@@ -124,6 +125,7 @@ fitLASSOstandardized_seq <- function(Xtilde,
                                      n_lambda = 60,
                                      eps = 0.001) {
   n <- nrow(Xtilde)
+  p <- ncol(Xtilde)
   
   # [ToDo] Check that n is the same between Xtilde and Ytilde
   if (n != length(Ytilde)) {
@@ -226,18 +228,51 @@ cvLASSO <- function(X ,
                     k = 5,
                     fold_ids = NULL,
                     eps = 0.001) {
+  n <- nrow(X)
+  
   # [ToDo] Fit Lasso on original data using fitLASSO
+  out1 <- fitLASSO(X, Y, lambda_seq, n_lambda, eps)
+  lambda_seq <- out1$lambda_seq
+  n_lambda <- length(lambda_seq)
+  beta_mat <- out1$beta_mat
+  beta0_vec <- out1$beta0_vec
   
   # [ToDo] If fold_ids is NULL, split the data randomly into k folds.
   # If fold_ids is not NULL, split the data according to supplied fold_ids.
+  if (is.null(fold_ids)) {
+    fold_ids <- sample(rep(1:k, length.out = n), size = n)
+  }
   
   # [ToDo] Calculate LASSO on each fold using fitLASSO,
   # and perform any additional calculations needed for CV(lambda) and SE_CV(lambda)
+  cv_folds <- matrix(nrow = k, ncol = n_lambda)
+  for (fold in 1:k) {
+    Xtrain <- X[fold_ids != fold, ]
+    Ytrain <- Y[fold_ids != fold]
+    
+    Xtest <- X[fold_ids == fold, ]
+    Ytest <- Y[fold_ids == fold]
+    
+    out2 <- fitLASSO(Xtrain, Ytrain, lambda_seq, n_lambda, eps)
+    
+    n_fold <- nrow(Xtrain)
+    for (i in 1:n_lambda) {
+      cv_folds[fold, i] <- crossprod(Ytest - out2$beta0_vec[i] - Xtest %*% out2$beta_mat[, i]) / n_fold
+    }
+  }
+  
+  cvm <- colMeans(cv_folds)
+  cvse <- apply(cv_folds, 2, \(cv_j) {
+    sd(cv_j) / sqrt(k)
+  })
   
   # [ToDo] Find lambda_min
+  lambda_min_idx <- which.min(cvm)
+  lambda_min <- lambda_seq[lambda_min_idx]
   
   # [ToDo] Find lambda_1SE
-  
+  lambda_max_idx <- which.max(ifelse(cvm <= cvm[lambda_min_idx] + cvse[lambda_min_idx], cvm, 0))
+  lambda_1se <- lambda_seq[lambda_max_idx]
   
   # Return output
   # Output from fitLASSO on the whole data
