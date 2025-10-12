@@ -57,20 +57,21 @@ fitLASSOstandardized <- function(Xtilde,
                                  lambda,
                                  beta_start = NULL,
                                  eps = 0.001) {
+  # Get input dimensions
   n <- nrow(Xtilde)
   p <- ncol(Xtilde)
   
-  #[ToDo]  Check that n is the same between Xtilde and Ytilde
+  #[ToDo] Check that n is the same between Xtilde and Ytilde
   if (n != length(Ytilde)) {
     stop("The number of rows in Xtilde should be equal to the length of Ytilde.")
   }
   
-  #[ToDo]  Check that lambda is non-negative
+  #[ToDo] Check that lambda is non-negative
   if (lambda < 0) {
     stop("lambda should be non-negative.")
   }
   
-  #[ToDo]  Check for starting point beta_start.
+  #[ToDo] Check for starting point beta_start.
   if (is.null(beta_start)) {
     # If none supplied, initialize with a vector of zeros.
     beta_start <- rep(0, p)
@@ -81,7 +82,7 @@ fitLASSOstandardized <- function(Xtilde,
     }
   }
   
-  #[ToDo]  Coordinate-descent implementation.
+  #[ToDo] Coordinate-descent implementation.
   # Stop when the difference between objective functions is less than eps for the first time.
   # For example, if you have 3 iterations with objectives 3, 1, 0.99999,
   # your should return fmin = 0.99999, and not have another iteration
@@ -107,6 +108,7 @@ fitLASSOstandardized <- function(Xtilde,
   return(list(beta = beta, fmin = fmin))
 }
 
+# Calculate lambda_max, the smallest value of lambda that gives zero solution
 calculate_lambda_max <- function(Xtilde, Ytilde) {
   n <- nrow(Xtilde)
   return(max(crossprod(Xtilde, Ytilde) / n))
@@ -124,6 +126,7 @@ fitLASSOstandardized_seq <- function(Xtilde,
                                      lambda_seq = NULL,
                                      n_lambda = 60,
                                      eps = 0.001) {
+  # Get input dimensions
   n <- nrow(Xtilde)
   p <- ncol(Xtilde)
   
@@ -228,6 +231,7 @@ cvLASSO <- function(X ,
                     k = 5,
                     fold_ids = NULL,
                     eps = 0.001) {
+  # Get input dimensions
   n <- nrow(X)
   
   # [ToDo] Fit Lasso on original data using fitLASSO
@@ -255,12 +259,14 @@ cvLASSO <- function(X ,
     
     out2 <- fitLASSO(Xtrain, Ytrain, lambda_seq, n_lambda, eps)
     
+    # Calculate CV for each lambda in the sequence
     n_fold <- nrow(Xtrain)
     for (i in 1:n_lambda) {
       cv_folds[fold, i] <- crossprod(Ytest - out2$beta0_vec[i] - Xtest %*% out2$beta_mat[, i]) / n_fold
     }
   }
   
+  # Calculate CV(lambda) and SE_CV(lambda)
   cvm <- colMeans(cv_folds)
   cvse <- apply(cv_folds, 2, \(cv_j) {
     sd(cv_j) / sqrt(k)
