@@ -188,12 +188,17 @@ fitLASSO <- function(X ,
                      n_lambda = 60,
                      eps = 0.001) {
   # [ToDo] Center and standardize X,Y based on standardizeXY function
+  out1 <- standardizeXY(X, Y)
   
   # [ToDo] Fit Lasso on a sequence of values using fitLASSOstandardized_seq
   # (make sure the parameters carry over)
+  out2 <- fitLASSOstandardized_seq(out1$Xtilde, out1$Ytilde, lambda_seq, n_lambda, eps)
+  lambda_seq <- out2$lambda_seq
   
   # [ToDo] Perform back scaling and centering to get original intercept and coefficient vector
   # for each lambda
+  beta_mat <- out1$weights * out2$beta_mat
+  beta0_vec <- out1$Ymean - out1$Xmeans %*% beta_mat
   
   # Return output
   # lambda_seq - the actual sequence of tuning parameters used
@@ -205,7 +210,6 @@ fitLASSO <- function(X ,
     beta0_vec = beta0_vec
   ))
 }
-
 
 # [ToDo] Fit LASSO and perform cross-validation to select the best fit
 # X - n x p matrix of covariates

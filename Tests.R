@@ -54,4 +54,8 @@ testthat::test_that("Test for LassoFunctions.R", {
   )
   testthat::expect_no_error(out <- fitLASSOstandardized_seq(Xtilde, Ytilde, lambda_seq))
   testthat::expect_equal(out$lambda_seq, c(5, 2, 1, 0))
+  
+  # Tests for fitLASSO()
+  testthat::expect_no_error(out <- fitLASSO(X, Y, lambda_seq))
+  testthat::expect_equal(out$lambda_seq, c(5, 2, 1, 0))
 })
