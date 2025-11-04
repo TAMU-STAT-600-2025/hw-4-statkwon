@@ -111,7 +111,7 @@ fitLASSOstandardized <- function(Xtilde,
 # Calculate lambda_max, the smallest value of lambda that gives zero solution
 calculate_lambda_max <- function(Xtilde, Ytilde) {
   n <- nrow(Xtilde)
-  return(max(crossprod(Xtilde, Ytilde) / n))
+  return(max(abs(crossprod(Xtilde, Ytilde) / n)))
 }
 
 # [ToDo] Fit LASSO on standardized data for a sequence of lambda values. Sequential version of a previous function.
